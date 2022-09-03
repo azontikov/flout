@@ -1,0 +1,102 @@
+\documentclass{article}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+
+\title{FLOUT -- \underline{FL}uka \underline{OU}tput processing scrip\underline{T}\newline
+\newline
+version 0.9}
+
+\begin{document}
+
+\maketitle
+
+FLOUT is a shell script for processing FLUKA output binary files by means of readout codes supplied with FLUKA package.
+The script requires FLUKA package version $\geq$ 3.0 distributed by CERN and bash shell version $\geq$ 4.0.
+FLOUT parses FLUKA input files in FIXED and FREE formats. It also treats nested preprocessor directives.
+
+User runs the script with the command (assume that \texttt{flout} is an alias for \texttt{flout.sh})\\
+\texttt{\$ flout [mode] [file] -d [directory] [parameter 1]...[parameter n]}\\
+where [mode] and [file] are mandatory arguments. All the rest arguments are optional.
+
+Auto mode (\texttt{-a}) parses FLUKA input file,
+finds all valid scoring cards and processes binary data.
+Interactive mode (\texttt{-i}) parses FLUKA input file,
+finds all valid scoring cards and prompts whether to process data for this card or not.
+Manual mode (\texttt{-m}) processes data according to text file supplied by the user.
+Optional flag (\texttt{-d}) is used to supply the path to destination directory for produced results.
+The help section is displayed by running\\
+\texttt{\$ flout -h}
+
+\begin{table}[htbp]
+\centering
+\caption{\label{tab:tabc}Optional parameters}
+\begin{tabular}{|l|l|}
+\hline
+Parameter             & Description                                          \\
+\hline
+\texttt{--log}        & save output from FLUKA readout programs to text file \\
+\texttt{--clean}      & move (rather that copy) results to [directory]       \\
+\texttt{--dat}        & convert USRBIN binary output to plain text           \\
+\texttt{--reuse}      & reprocessing of already processed binary data        \\
+\hline
+\end{tabular}
+\end{table}
+
+The script has the following limitations:
+\begin{enumerate}
+	\item Do not use exponential notation for logical output unit in FLUKA input file.
+	For instance, use 23 or 23.0 rather than 0.23E+02 or 23000.0E-03
+	\item Do not \texttt{--reuse} USRYIELD data due to SIGFPE somewhere from
+	\texttt{usysuw.f:924} and \texttt{usysuw.f:1410}
+\end{enumerate}
+
+\section*{Example usage}
+\textbf{Task 1.} Run \texttt{example.inp}, process all binary files in auto mode.\\
+\texttt{
+\$ rfluka -N0 -M5 example.inp\\
+\$ flout -a example.inp\\
+}
+
+\textbf{Task 2.} Run \texttt{example.inp}, process data in interactive mode,
+copy it to \texttt{result} subdirectory and save log.\\
+\texttt{
+\$ rfluka -N0 -M5 example.inp\\
+\$ mkdir result\\
+\$ flout -i example.inp -d result/ --log\\
+}
+
+\textbf{Task 3.} Run \texttt{example.inp}, process unit 50 and unit 51 USRBIN data in manual mode,
+convert USRBIN binary data to plain text, move it to \texttt{result} subdirectory.\\
+\texttt{
+\$ rfluka -N0 -M5 example.inp\\
+\$ mkdir result\\
+\$ cat example.txt\\
+example\\
+50 USRBIN\\
+51 USRBIN\\
+\$ flout -m example.txt -d result/ --dat --clean\\
+}
+
+\textbf{Task 4.} Make copies of \texttt{example.inp} with different seeds
+and place them into subdirectories.
+Run \texttt{example\_001.inp} in subdirectory \texttt{task4\_001},
+run \texttt{example\_002.inp} in subdirectory \texttt{task4\_002},
+process all binary files in auto mode and copy them into subdirectory \texttt{result}.
+Reuse (merge) already processed data from \texttt{example\_001.inp} and \texttt{example\_002.inp}.\\
+\texttt{
+\$ cd task4\_001\\
+\$ rfluka -N0 -M5 example\_001.inp\\
+\$ flout -a example\_001.inp -d ../result\\
+\$ cd ../task4\_002\\
+\$ rfluka -N0 -M5 example\_002.inp\\
+\$ flout -a example\_002.inp -d ../result\\
+\$ cd ../result\\
+\$ flout -a ../example.inp --reuse\\
+}
+
+\section*{Changelog}
+\raggedright
+2022-09-03 version 0.9\\
+-- remove config file
+
+\end{document}
