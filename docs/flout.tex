@@ -4,14 +4,14 @@
 
 \title{FLOUT -- \underline{FL}uka \underline{OU}tput processing scrip\underline{T}\newline
 \newline
-version 0.9}
+version 0.9.1}
 
 \begin{document}
 
 \maketitle
 
 FLOUT is a shell script for processing FLUKA output binary files by means of readout codes supplied with FLUKA package.
-The script requires FLUKA package version $\geq$ 3.0 distributed by CERN and bash shell version $\geq$ 4.0.
+The script requires FLUKA package distributed by CERN or INFN and bash shell version $\geq$ 4.0.
 FLOUT parses FLUKA input files in FIXED and FREE formats. It also treats nested preprocessor directives.
 
 User runs the script with the command (assume that \texttt{flout} is an alias for \texttt{flout.sh})\\
@@ -24,8 +24,12 @@ Interactive mode (\texttt{-i}) parses FLUKA input file,
 finds all valid scoring cards and prompts whether to process data for this card or not.
 Manual mode (\texttt{-m}) processes data according to text file supplied by the user.
 Optional flag (\texttt{-d}) is used to supply the path to destination directory for produced results.
-The help section is displayed by running\\
-\texttt{\$ flout -h}
+The help section is displayed by running \texttt{\$ flout -h}
+
+By default FLOUT searches for FLUKA readout programs inside CERN FLUKA distribution
+so make sure its \texttt{/bin} folder is available on your \texttt{\$PATH}.
+Supplying the \texttt{--old} parameter allows to search for readout codes inside INFN FLUKA distribution
+which requires \texttt{\$FLUPRO} shell variable.
 
 \begin{table}[htbp]
 \centering
@@ -38,6 +42,7 @@ Parameter             & Description                                          \\
 \texttt{--clean}      & move (rather that copy) results to [directory]       \\
 \texttt{--dat}        & convert USRBIN binary output to plain text           \\
 \texttt{--reuse}      & reprocessing of already processed binary data        \\
+\texttt{--old}        & use readout programs from old (INFN) FLUKA package   \\
 \hline
 \end{tabular}
 \end{table}
@@ -81,7 +86,7 @@ example\\
 and place them into subdirectories.
 Run \texttt{example\_001.inp} in subdirectory \texttt{task4\_001},
 run \texttt{example\_002.inp} in subdirectory \texttt{task4\_002},
-process all binary files in auto mode and copy them into subdirectory \texttt{result}.
+process all binary files in auto mode and copy results into subdirectory \texttt{result}.
 Reuse (merge) already processed data from \texttt{example\_001.inp} and \texttt{example\_002.inp}.\\
 \texttt{
 \$ cd task4\_001\\
@@ -96,7 +101,10 @@ Reuse (merge) already processed data from \texttt{example\_001.inp} and \texttt{
 
 \section*{Changelog}
 \raggedright
+2022-09-04 version 0.9.1\\
+-- add \texttt{-{}-old} parameter to support INFN FLUKA distribution, update docs\newline
+
 2022-09-03 version 0.9\\
--- remove config file
+-- remove config file\newline
 
 \end{document}

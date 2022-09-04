@@ -4,7 +4,7 @@
 #  _____    __    __                     _  #
 #  FLOUT —— FLuka OUtput processing scripT  #
 #  ‾‾‾‾‾    ‾‾    ‾‾                     ‾  #
-#  version 0.9                              #
+#  version 0.9.1                            #
 #                                           #
 # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -35,6 +35,7 @@ function PrintHelp(){
 	echo "--clean		move (rather than copy) results to /path/to/directory"
 	echo "--dat  		convert USRBIN binary to plain text"
 	echo "--reuse		reprocessing of already processed binary files"
+	echo "--old			use readout programs from old (INFN) FLUKA package"
 	echo ""
 }
 
@@ -594,7 +595,7 @@ SCORECARDS["USRTRACK"]=".trk"
 SCORECARDS["USRYIELD"]=".yie"
 
 #### Settings ####
-SETTINGS=( ["log"]="false" ["clean"]="false" ["dat"]="false" ["reuse"]="false" )	# default settings
+SETTINGS=( ["log"]="false" ["clean"]="false" ["dat"]="false" ["reuse"]="false" ["old"]="false" )	# default settings
 
 #### Check command line arguments ####
 case "$1" in
@@ -653,14 +654,25 @@ if [[ "$1" != "" ]]; then
 fi
 
 #### Fluka readout programs ####
-READOUTS["DETECT"]="$(which detsuw)"
-READOUTS["RESNUCLE"]="$(which usrsuw)"
-READOUTS["USRBDX"]="$(which usxsuw)"
-READOUTS["USRBIN"]="$(which usbsuw)"
-READOUTS["USRTRACK"]="$(which ustsuw)"
-READOUTS["USRCOLL"]="$(which ustsuw)"
-READOUTS["USRYIELD"]="$(which usysuw)"
-READOUTS["BIN2DAT"]="$(which usbrea)"
+if [[ "${SETTINGS[old]}" == "true" ]]; then
+	READOUTS["DETECT"]="$(which $FLUPRO/flutil/detsuw)"
+	READOUTS["RESNUCLE"]="$(which $FLUPRO/flutil/usrsuw)"
+	READOUTS["USRBDX"]="$(which $FLUPRO/flutil/usxsuw)"
+	READOUTS["USRBIN"]="$(which $FLUPRO/flutil/usbsuw)"
+	READOUTS["USRTRACK"]="$(which $FLUPRO/flutil/ustsuw)"
+	READOUTS["USRCOLL"]="$(which $FLUPRO/flutil/ustsuw)"
+	READOUTS["USRYIELD"]="$(which $FLUPRO/flutil/usysuw)"
+	READOUTS["BIN2DAT"]="$(which $FLUPRO/flutil/usbrea)"
+else
+	READOUTS["DETECT"]="$(which detsuw)"
+	READOUTS["RESNUCLE"]="$(which usrsuw)"
+	READOUTS["USRBDX"]="$(which usxsuw)"
+	READOUTS["USRBIN"]="$(which usbsuw)"
+	READOUTS["USRTRACK"]="$(which ustsuw)"
+	READOUTS["USRCOLL"]="$(which ustsuw)"
+	READOUTS["USRYIELD"]="$(which usysuw)"
+	READOUTS["BIN2DAT"]="$(which usbrea)"
+fi
 for KEY in "${!READOUTS[@]}"; do
 	if [[ "${READOUTS[$KEY]}" == "" ]]; then
 		echo "Error: fluka '$KEY' readout program not found" >&2
