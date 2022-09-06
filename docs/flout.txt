@@ -1,6 +1,6 @@
 FLOUT -- FLuka OUtput processing scripT
 
-version 0.9.1
+version 0.9.2
 
 September 4, 2022
 
@@ -21,9 +21,9 @@ not. Manual mode (-m) processes data according to text file supplied by the
 user. Optional flag (-d) is used to supply the path to destination directory for
 produced results. The help section is displayed by running $ flout -h
 By default FLOUT searches for FLUKA readout programs inside CERN
-FLUKA distribution so make sure its /bin folder is available on your $PATH.
-Supplying the --old parameter allows to search for readout codes inside INFN
-FLUKA distribution which requires $FLUPRO shell variable.
+FLUKA so make sure its /bin folder is available on the $PATH. Supplying the
+--old parameter allows to search for readout codes inside INFN FLUKA which
+requires $FLUPRO shell variable.
 
 Table 1: Optional parameters
 Parameter	Description
@@ -79,6 +79,9 @@ $ flout -a ../example.inp --reuse
 
 
 	Changelog
+
+2022-09-06 version 0.9.2
+– add check for writing permission in destination directory
 
 2022-09-04 version 0.9.1
 – add --old parameter to support INFN FLUKA distribution, update docs

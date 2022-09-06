@@ -4,7 +4,7 @@
 #  _____    __    __                     _  #
 #  FLOUT —— FLuka OUtput processing scripT  #
 #  ‾‾‾‾‾    ‾‾    ‾‾                     ‾  #
-#  version 0.9.1                            #
+#  version 0.9.2                            #
 #                                           #
 # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -35,7 +35,7 @@ function PrintHelp(){
 	echo "--clean		move (rather than copy) results to /path/to/directory"
 	echo "--dat  		convert USRBIN binary to plain text"
 	echo "--reuse		reprocessing of already processed binary files"
-	echo "--old			use readout programs from old (INFN) FLUKA package"
+	echo "--old  		use readout programs from old (INFN) FLUKA package"
 	echo ""
 }
 
@@ -625,6 +625,10 @@ if [[ "$1" != "" ]]; then
 	if [[ "$1" == "-d" ]]; then
 		if [[ ! -d $2 ]]; then
 			echo "Error: directory '$2' not found" >&2
+			exit 1
+		fi
+		if [[ ! -w $2 ]]; then
+			echo "Error: no write permission for destination directory" >&2
 			exit 1
 		fi
 		DESTDIR="$(readlink -f $2)"
