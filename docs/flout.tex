@@ -4,7 +4,7 @@
 
 \title{FLOUT -- \underline{FL}uka \underline{OU}tput processing scrip\underline{T}\newline
 \newline
-version 0.9.2}
+version 0.9.3}
 
 \begin{document}
 
@@ -23,11 +23,12 @@ finds all valid scoring cards and processes binary data.
 Interactive mode (\texttt{-i}) parses FLUKA input file,
 finds all valid scoring cards and prompts whether to process data for this card or not.
 Manual mode (\texttt{-m}) processes data according to text file supplied by the user.
+Scan mode (\texttt{-s}) generates text file for manual (\texttt{-m}) mode.
 Optional flag (\texttt{-d}) is used to supply the path to destination directory for produced results.
 The help section is displayed by running \texttt{\$ flout -h}
 
 By default FLOUT searches for FLUKA readout programs inside CERN FLUKA
-so make sure its \texttt{/bin} folder is available on the \texttt{\$PATH}.
+which \texttt{/bin} folder should be available on the \texttt{\$PATH}.
 Supplying the \texttt{--old} parameter allows to search for readout codes inside INFN FLUKA
 which requires \texttt{\$FLUPRO} shell variable.
 
@@ -99,8 +100,18 @@ Reuse (merge) already processed data from \texttt{example\_001.inp} and \texttt{
 \$ flout -a ../example.inp --reuse\\
 }
 
+\textbf{Task 5.} Scan \texttt{example.inp} and generate \texttt{example.txt} file for manual mode.\\
+\texttt{
+\$ rfluka -N0 -M5 example.inp\\
+\$ flout -s example.inp\\
+\$ flout -m example.txt\\
+}
+
 \section*{Changelog}
 \raggedright
+2022-09-11 version 0.9.3\\
+-- add scan mode \texttt{-s} to generate input for manual mode, update docs\newline
+
 2022-09-06 version 0.9.2\\
 -- add check for writing permission in destination directory\newline
 

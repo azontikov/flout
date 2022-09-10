@@ -4,7 +4,7 @@
 #  _____    __    __                     _  #
 #  FLOUT —— FLuka OUtput processing scripT  #
 #  ‾‾‾‾‾    ‾‾    ‾‾                     ‾  #
-#  version 0.9.2                            #
+#  version 0.9.3                            #
 #                                           #
 # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -26,6 +26,7 @@ function PrintHelp(){
 	echo "auto       	flout -a fluka_input.inp"
 	echo "interactive	flout -i fluka_input.inp"
 	echo "manual     	flout -m user_input.txt"
+	echo "scan       	flout -s fluka_input.inp"
 	echo ""
 	echo "Copy or move results to directory:"
 	echo "flout [mode] [file] -d /path/to/directory"
@@ -569,7 +570,9 @@ fi
 declare -A SETTINGS	# key=SETTING, val=VALUE
 INTERACTIVE=""		# -i option
 MANUAL=""			# -m option
+SCAN=""				# -s option
 INPUTFILE=""
+UIFILE=""
 DESTDIR=""			# -d option
 KEY=""
 PAR=""				# -- optional arguments
@@ -600,11 +603,17 @@ SETTINGS=( ["log"]="false" ["clean"]="false" ["dat"]="false" ["reuse"]="false" [
 #### Check command line arguments ####
 case "$1" in
 -a)	INTERACTIVE="false"
-	MANUAL="false";;
+	MANUAL="false"
+	SCAN="false";;
 -i)	INTERACTIVE="true"
-	MANUAL="false";;
+	MANUAL="false"
+	SCAN="false";;
 -m)	INTERACTIVE="false"
-	MANUAL="true";;
+	MANUAL="true"
+	SCAN="false";;
+-s)	INTERACTIVE="false"
+	MANUAL="false"
+	SCAN="true";;
 -h) PrintHelp
 	exit 1;;
 *)	echo "Error: illegal mode '$1'" >&2
@@ -710,10 +719,17 @@ fi
 echo ""
 echo "Processing:"
 UNITMIN=1000
-touch $TXTFILE
-if [[ "${SETTINGS[log]}" == "true" ]]; then
-	touch $LOGFILE
+if [[ "$SCAN" == "false" ]]; then
+	touch $TXTFILE
+	if [[ "${SETTINGS[log]}" == "true" ]]; then
+		touch $LOGFILE
+	fi
+else
+	UIFILE="${FILENAME}.txt"
+	touch $UIFILE
+	echo "$FILENAME" > $UIFILE
 fi
+
 while (( "${#UNITS[@]}" > 0 )); do
 	for KEY in "${!UNITS[@]}"; do
 		if (( "$KEY" < "$UNITMIN" )); then
@@ -721,19 +737,29 @@ while (( "${#UNITS[@]}" > 0 )); do
 		fi
 	done
 	(( ++FILECOUNT ))
-	ProcessFlukaOutput "$UNITMIN"
+	if [[ "$SCAN" == "false" ]]; then
+		ProcessFlukaOutput "$UNITMIN"
+	else
+		echo "$UNITMIN ${UNITS[$UNITMIN]}" >> $UIFILE
+	fi
 	unset UNITS["$UNITMIN"]
 	UNITMIN=1000
 done
-rm $TXTFILE
+if [[ "$SCAN" == "false" ]]; then
+	rm $TXTFILE
+fi
 
 #### Copy or move processed files ####
-if [[ "$DESTDIR" != "" ]]; then
+if [[ "$DESTDIR" != "" ]] && [[ "$SCAN" == "false" ]]; then
 	CopyFiles
 fi
 
-if [[ "${SETTINGS[log]}" == "true" ]]; then
+if [[ "${SETTINGS[log]}" == "true" ]] && [[ "$SCAN" == "false" ]]; then
 	echo "Log file: $LOGFILE"
+fi
+
+if [[ "$SCAN" == "true" ]]; then
+	echo "User input file: $UIFILE"
 fi
 echo ""
 #### End ####
