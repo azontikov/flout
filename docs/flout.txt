@@ -1,8 +1,8 @@
 FLOUT -- FLuka OUtput processing scripT
 
-version 0.9.3
+version 0.9.4
 
-September 11, 2022
+September 12, 2022
 
 FLOUT is a shell script for processing FLUKA output binary files by means
 of readout codes supplied with FLUKA package. The script requires FLUKA
@@ -85,6 +85,9 @@ $ flout -m example.txt
 
 
 	Changelog
+
+2022-09-12 version 0.9.4
+– check missing quotes, minor changes
 
 2022-09-11 version 0.9.3
 – add scan mode -s to generate input for manual mode, update docs

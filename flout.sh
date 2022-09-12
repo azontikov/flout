@@ -4,7 +4,7 @@
 #  _____    __    __                     _  #
 #  FLOUT —— FLuka OUtput processing scripT  #
 #  ‾‾‾‾‾    ‾‾    ‾‾                     ‾  #
-#  version 0.9.3                            #
+#  version 0.9.4                            #
 #                                           #
 # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -42,8 +42,8 @@ function PrintHelp(){
 
 function ReadUserInput(){
 	local IFS=$'\n'
-	FILENAME="$(sed -n 1p $1)"
-	FILENAME="$(echo -n $FILENAME | sed 's/[[:space:]]//g')"
+	FILENAME="$(sed -n 1p "$1")"
+	FILENAME="$(echo -n "$FILENAME" | sed 's/[[:space:]]//g')"
 	if [[ "$FILENAME" == "" ]]; then
 		echo "Error: empty name in user input '$1'" >&2
 		exit 1
@@ -53,10 +53,10 @@ function ReadUserInput(){
 	local unit=""
 	local scorer=""
 	local key=""
-	for string in $(sed -n '2,$ p' $1); do
+	for string in $(sed -n '2,$ p' "$1"); do
 		found="false"
-		unit="$(echo -n $string | cut -d " " -f1)"
-		scorer="$(echo -n $string | cut -d " " -f2)"
+		unit="$(echo -n "$string" | cut -d " " -f1)"
+		scorer="$(echo -n "$string" | cut -d " " -f2)"
 		if (( "$unit" > 0 )) && (( "$unit" < 1000 )); then
 			for key in "${!SCORECARDS[@]}"; do
 				if [[ "$key" == "$scorer" ]]; then
@@ -105,27 +105,27 @@ function ReadFlukaInput(){
 	GetGlobalFormat "$1"
 	#### cleanup ####
 	for key in "${!DEFS[@]}"; do
-		unset DEFS["$key"]
+		unset 'DEFS["$key"]'
 	done
 	for key in "${!LEVELS[@]}"; do
-		unset LEVELS["$key"]
+		unset 'LEVELS["$key"]'
 	done
 	for key in "${!PROC[@]}"; do
-		unset PROC["$key"]
+		unset 'PROC["$key"]'
 	done
 	PREPRO="true"
 	LEVEL=0
 	LEVELS["$LEVEL"]="true"
 	PROC["$LEVEL"]="true"
 	#### 2nd pass of the file ####
-	for string in $(sed -n '1,$ p' $1); do
+	for string in $(sed -n '1,$ p' "$1"); do
 		#### Skip comment ####
 		CheckComment "$string"
 		if [[ "$COMM" == "true" ]]; then
 			continue
 		fi
 		#### Strip comment ####
-		string="$(echo -n $string | sed 's/![[:print:]]*$//')"
+		string="$(echo -n "$string" | sed 's/![[:print:]]*$//')"
 		if [[ "$string" == "" ]]; then
 			continue
 		fi
@@ -246,10 +246,10 @@ function ProcessFlukaOutput(){
 	#### Search for files ####
 	if [[ "${SETTINGS[reuse]}" == "false" ]]; then
 		name_pattern="^${FILENAME}[[:print:]]*fort.${unit}$" # e.g. "example...fort.47" for "example_01001_fort.47"
-		dummy="$(ls -1 | grep $name_pattern)"
+		dummy="$(ls -1 | grep "$name_pattern")"
 		if [[ "$dummy" == "" ]]; then
 			name_pattern="^${FILENAME}[[:print:]]*ftn.${unit}$" # e.g. "example...ftn.47" for "example_01001_ftn.47"
-			dummy="$(ls -1 | grep $name_pattern)"
+			dummy="$(ls -1 | grep "$name_pattern")"
 		fi
 	else
 		if [[ "${UNITS[$unit]}" == "USRYIELD" ]]; then
@@ -257,34 +257,34 @@ function ProcessFlukaOutput(){
 			return
 		fi
 		name_pattern="^${FILENAME}[[:print:]]*$unit${SCORECARDS[${UNITS[$unit]}]}" # e.g. "example...47.bnx" for "example_47.bnx"
-		dummy="$(ls -1 | grep $name_pattern)"
+		dummy="$(ls -1 | grep "$name_pattern")"
 	fi
 	if [[ "$dummy" == "" ]]; then
 		echo "Warning: unit $unit ${UNITS[$unit]} files not found" >&2
 		return
 	fi
 	#### Input ####
-	echo "" >> $LOGFILE
-	echo "##########" >> $LOGFILE
-	echo "Processing [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}" >> $LOGFILE
-	echo "##########" >> $LOGFILE
-	ls -1 | grep $name_pattern	> $TXTFILE
-	echo "" >> $TXTFILE
+	echo "" >> "$LOGFILE"
+	echo "##########" >> "$LOGFILE"
+	echo "Processing [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}" >> "$LOGFILE"
+	echo "##########" >> "$LOGFILE"
+	ls -1 | grep "$name_pattern" > "$TXTFILE"
+	echo "" >> "$TXTFILE"
 	if [[ "${unit}" == "17" ]]; then # DETECT output is always on unit 17
 		merged_name="${FILENAME}_${unit}.dtc"
 	else
 		merged_name="${FILENAME}_${unit}"
 	fi
-	echo "$merged_name" >> $TXTFILE
+	echo "$merged_name" >> "$TXTFILE"
 	#### Processing ####
 	echo -ne "[ ] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}\r"
 	readout="${READOUTS[${UNITS[$unit]}]}"
-	cat $TXTFILE | $readout >> $LOGFILE
+	cat "$TXTFILE" | "$readout" >> "$LOGFILE"
 	if [[ "${UNITS[$unit]}" == "USRBIN" ]] && [[ "${SETTINGS[dat]}" == "true" ]]; then # convert USRBIN binary output to plain text
-		echo "${merged_name}.bnn" > $TXTFILE
-		echo "${merged_name}.dat" >>$TXTFILE
+		echo "${merged_name}.bnn" > "$TXTFILE"
+		echo "${merged_name}.dat" >> "$TXTFILE"
 		readout="${READOUTS[BIN2DAT]}"
-		cat $TXTFILE | $readout >> $LOGFILE
+		cat "$TXTFILE" | "$readout" >> "$LOGFILE"
 	fi
 	echo  "[+] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}"
 	#### Add files for further copy/move operations ####
@@ -323,18 +323,18 @@ function CopyFiles(){
 		(( ++count ))
 		echo -ne "[ ] [$count/$total] $file\r"
 		if [[ "${SETTINGS[clean]}" == "true" ]]; then
-			mv $file $DESTDIR
+			mv "$file" "$DESTDIR"
 		else
-			cp $file $DESTDIR/$file
+			cp "$file" "$DESTDIR"/"$file"
 		fi
 		echo "[+] [$count/$total] $file"
 	done
 	#### Copy log ####
 	if [[ "${SETTINGS[log]}" == "true" ]]; then
 		if [[ "${SETTINGS[clean]}" == "true" ]]; then
-			mv $LOGFILE $DESTDIR
+			mv "$LOGFILE" "$DESTDIR"
 		else
-			cp $LOGFILE $DESTDIR/$LOGFILE
+			cp "$LOGFILE" "$DESTDIR"/"$LOGFILE"
 		fi
 	fi
 	#### Print path to destination directory ####
@@ -349,14 +349,14 @@ function GetGlobalFormat(){
 	local string=""
 	local codewd=""
 	local what4=""
-	for string in $( sed -n '1,$ p' $1); do
+	for string in $( sed -n '1,$ p' "$1"); do
 		#### Skip comment ####
 		CheckComment "$string"
 		if [[ "$COMM" == "true" ]]; then
 			continue
 		fi
 		#### Strip comment ####
-		string="$(echo -n $string | sed 's/![[:print:]]*$//')"
+		string="$(echo -n "$string" | sed 's/![[:print:]]*$//')"
 		if [[ "$string" == "" ]]; then
 			continue
 		fi
@@ -396,15 +396,15 @@ function CheckPrepro(){
 		return
 	fi
 	local id=""
-	local def="$(echo -n $1 | cut -d " " -f1)"
-	local idname="$(echo -n $1 | cut -d " " -f2)"
+	local def="$(echo -n "$1" | cut -d " " -f1)"
+	local idname="$(echo -n "$1" | cut -d " " -f2)"
 	if [[ "$def" == "#define" ]]; then
 		if [[ "$PREPRO" == "true" ]]; then
 			DEFS["$idname"]=""
 		fi
 	elif [[ "$def" == "#undef" ]]; then
 		if [[ "$PREPRO" == "true" ]]; then
-			unset DEFS["$idname"]
+			unset 'DEFS["$idname"]'
 		fi
 	elif [[ "$def" == "#if" ]] || [[ "$def" == "#ifdef" ]]; then
 		(( ++LEVEL ))
@@ -433,7 +433,7 @@ function CheckPrepro(){
 		PROC["$LEVEL"]="true"
 		ApplyPrepro
 	elif [[ "$def" == "#elif" ]]; then
-		if [[ "$LEVELS[$LEVEL]" == "true" ]]; then
+		if [[ "${LEVELS[$LEVEL]}" == "true" ]]; then
 			PROC["$LEVEL"]="false"
 			ApplyPrepro
 		else
@@ -457,8 +457,8 @@ function CheckPrepro(){
 		fi
 		ApplyPrepro
 	elif [[ "$def" == "#endif" ]]; then
-		unset LEVELS["$LEVEL"]
-		unset PROC["$LEVEL"]
+		unset 'LEVELS["$LEVEL"]'
+		unset 'PROC["$LEVEL"]'
 		(( --LEVEL ))
 		ApplyPrepro
 	else
@@ -488,7 +488,7 @@ function GetCODEWD(){
 		CODEWD="$(echo -n "$1" | cut -c 1-10 | sed 's/[[:space:]]*$//')"
 	else
 		local str="$(echo -n "$1" | sed 's/^[[:space:]]*//')"
-		local IFS=' ,;\:'
+		local IFS=' ,;:\'
 		local tok=($str)
 		CODEWD="${tok[0]}"
 	fi
@@ -512,7 +512,7 @@ function CheckContinuation(){
 	else
 		str="$1"
 		len="${#str}"
-		local last=$(( $len - 1 ))
+		local last=$(( len - 1 ))
 		tok="${str:$last:1}"
 		if [[ "$tok" == '&' ]]; then
 			CONT="true"
@@ -555,7 +555,7 @@ function GetFixedWHAT(){
 
 function GetFreeWHAT(){
 	local str="$(echo -n "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-	local IFS=' ,;\:'
+	local IFS=' ,;:\'
 	local tok=($str)
 	NUMBER="$(echo -n "${tok[$2]}" | sed 's/\.0*$//')"
 }
@@ -625,7 +625,7 @@ if [[ ! -f "$2" ]]; then
 	echo "Error: input file '$2' not found" >&2
 	exit 1
 fi
-INPUTFILE="$(readlink -f $2)"
+INPUTFILE="$(readlink -f "$2")"
 
 shift
 shift
@@ -640,10 +640,10 @@ if [[ "$1" != "" ]]; then
 			echo "Error: no write permission for destination directory" >&2
 			exit 1
 		fi
-		DESTDIR="$(readlink -f $2)"
+		DESTDIR="$(readlink -f "$2")"
 		shift
 		shift
-	elif [[ "$(echo -n $1 | cut -c 1-2)" != "--" ]]; then
+	elif [[ "$(echo -n "$1" | cut -c 1-2)" != "--" ]]; then
 		echo "Error: illegal parameter '$1'" >&2
 		echo "Use 'flout -h' to get help" >&2
 		exit 1
@@ -651,7 +651,7 @@ if [[ "$1" != "" ]]; then
 	for PAR in "$@"; do
 		FOUND="false"
 		for KEY in "${!SETTINGS[@]}"; do
-			if [[ "$(echo -n $PAR | cut -c 3-)" == "$KEY" ]]; then
+			if [[ "$(echo -n "$PAR" | cut -c 3-)" == "$KEY" ]]; then
 				FOUND="true"
 				SETTINGS["$KEY"]="true"
 				shift
@@ -668,14 +668,14 @@ fi
 
 #### Fluka readout programs ####
 if [[ "${SETTINGS[old]}" == "true" ]]; then
-	READOUTS["DETECT"]="$(which $FLUPRO/flutil/detsuw)"
-	READOUTS["RESNUCLE"]="$(which $FLUPRO/flutil/usrsuw)"
-	READOUTS["USRBDX"]="$(which $FLUPRO/flutil/usxsuw)"
-	READOUTS["USRBIN"]="$(which $FLUPRO/flutil/usbsuw)"
-	READOUTS["USRTRACK"]="$(which $FLUPRO/flutil/ustsuw)"
-	READOUTS["USRCOLL"]="$(which $FLUPRO/flutil/ustsuw)"
-	READOUTS["USRYIELD"]="$(which $FLUPRO/flutil/usysuw)"
-	READOUTS["BIN2DAT"]="$(which $FLUPRO/flutil/usbrea)"
+	READOUTS["DETECT"]="$(which "$FLUPRO"/flutil/detsuw)"
+	READOUTS["RESNUCLE"]="$(which "$FLUPRO"/flutil/usrsuw)"
+	READOUTS["USRBDX"]="$(which "$FLUPRO"/flutil/usxsuw)"
+	READOUTS["USRBIN"]="$(which "$FLUPRO"/flutil/usbsuw)"
+	READOUTS["USRTRACK"]="$(which "$FLUPRO"/flutil/ustsuw)"
+	READOUTS["USRCOLL"]="$(which "$FLUPRO"/flutil/ustsuw)"
+	READOUTS["USRYIELD"]="$(which "$FLUPRO"/flutil/usysuw)"
+	READOUTS["BIN2DAT"]="$(which "$FLUPRO"/flutil/usbrea)"
 else
 	READOUTS["DETECT"]="$(which detsuw)"
 	READOUTS["RESNUCLE"]="$(which usrsuw)"
@@ -706,7 +706,7 @@ fi
 if [[ "$MANUAL" == "true" ]]; then
 	ReadUserInput "$INPUTFILE"
 else
-	FILENAME="$(echo -n $(basename $INPUTFILE) | sed 's/\.\(inp\|INP\)$//')"
+	FILENAME="$(echo -n "$(basename "$INPUTFILE")" | sed 's/\.\(inp\|INP\)$//')"
 	ReadFlukaInput "$INPUTFILE"
 fi
 
@@ -720,14 +720,14 @@ echo ""
 echo "Processing:"
 UNITMIN=1000
 if [[ "$SCAN" == "false" ]]; then
-	touch $TXTFILE
+	touch "$TXTFILE"
 	if [[ "${SETTINGS[log]}" == "true" ]]; then
-		touch $LOGFILE
+		touch "$LOGFILE"
 	fi
 else
 	UIFILE="${FILENAME}.txt"
-	touch $UIFILE
-	echo "$FILENAME" > $UIFILE
+	touch "$UIFILE"
+	echo "$FILENAME" > "$UIFILE"
 fi
 
 while (( "${#UNITS[@]}" > 0 )); do
@@ -740,26 +740,24 @@ while (( "${#UNITS[@]}" > 0 )); do
 	if [[ "$SCAN" == "false" ]]; then
 		ProcessFlukaOutput "$UNITMIN"
 	else
-		echo "$UNITMIN ${UNITS[$UNITMIN]}" >> $UIFILE
+		echo "$UNITMIN ${UNITS[$UNITMIN]}" >> "$UIFILE"
 	fi
-	unset UNITS["$UNITMIN"]
+	unset 'UNITS["$UNITMIN"]'
 	UNITMIN=1000
 done
-if [[ "$SCAN" == "false" ]]; then
-	rm $TXTFILE
-fi
 
 #### Copy or move processed files ####
-if [[ "$DESTDIR" != "" ]] && [[ "$SCAN" == "false" ]]; then
-	CopyFiles
-fi
-
-if [[ "${SETTINGS[log]}" == "true" ]] && [[ "$SCAN" == "false" ]]; then
-	echo "Log file: $LOGFILE"
-fi
-
-if [[ "$SCAN" == "true" ]]; then
+if [[ "$SCAN" == "false" ]]; then
+	rm "$TXTFILE"
+	if [[ "$DESTDIR" != "" ]]; then
+		CopyFiles
+	fi
+	if [[ "${SETTINGS[log]}" == "true" ]]; then
+		echo "Log file: $LOGFILE"
+	fi
+else
 	echo "User input file: $UIFILE"
 fi
+
 echo ""
 #### End ####
