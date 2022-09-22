@@ -4,7 +4,7 @@
 #  _____    __    __                     _  #
 #  FLOUT —— FLuka OUtput processing scripT  #
 #  ‾‾‾‾‾    ‾‾    ‾‾                     ‾  #
-#  version 0.9.4                            #
+#  version 0.9.5                            #
 #                                           #
 # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -15,29 +15,29 @@ fi
 set -f	# disable filename expansion (globbing)
 
 function PrintHelp(){
-	echo ""
-	echo "Usage:"
-	echo "flout [mode] [file]"
-	echo "flout [mode] [file] [parameter 1]...[parameter n]"
-	echo "flout [mode] [file] -d [directory]"
-	echo "flout [mode] [file] -d [directory] [parameter 1]...[parameter n]"
-	echo ""
-	echo "Modes:"
-	echo "auto       	flout -a fluka_input.inp"
-	echo "interactive	flout -i fluka_input.inp"
-	echo "manual     	flout -m user_input.txt"
-	echo "scan       	flout -s fluka_input.inp"
-	echo ""
-	echo "Copy or move results to directory:"
-	echo "flout [mode] [file] -d /path/to/directory"
-	echo ""
-	echo "Optional parameters:"
-	echo "--log  		save output from fluka readout programs"
-	echo "--clean		move (rather than copy) results to /path/to/directory"
-	echo "--dat  		convert USRBIN binary to plain text"
-	echo "--reuse		reprocessing of already processed binary files"
-	echo "--old  		use readout programs from old (INFN) FLUKA package"
-	echo ""
+	echo "
+    Usage:
+    flout [mode] [file]
+    flout [mode] [file] [parameter 1]...[parameter n]
+    flout [mode] [file] -d [directory]
+    flout [mode] [file] -d [directory] [parameter 1]...[parameter n]
+
+    Modes:
+    auto       	flout -a fluka_input.inp
+    interactive	flout -i fluka_input.inp
+    manual     	flout -m user_input.txt
+    scan       	flout -s fluka_input.inp
+
+    Copy or move results to directory:
+    flout [mode] [file] -d /path/to/directory
+
+    Optional parameters:
+    --log  		save output from fluka readout programs
+    --clean		move (rather than copy) results to /path/to/directory
+    --dat  		convert USRBIN binary to plain text
+    --reuse		reprocessing of already processed binary files
+    --old  		use readout programs from old (INFN) FLUKA package
+"
 }
 
 function ReadUserInput(){
@@ -210,22 +210,21 @@ function ReadFlukaInput(){
 				#### Interactive mode ####
 				if [[ "$INTERACTIVE" == "true" ]]; then
 					if [[ "$promptuser" == "true" ]]; then
-						echo ""
-						echo "Press 'y' to process or 'n' to skip:"
 						promptuser="false"
+						echo ""
+						echo "Press 'y' to process or any other key to skip:"
 					fi
 					echo -ne "[ ] unit $UNIT $scorer\r"
-					read -n 1 -s answer
+					read -r -n 1 -s answer
 					if [[ "$answer" == "y" ]] || [[ "$answer" == "Y" ]]; then
 						echo -n "[+] unit $UNIT $scorer"
 						sleep 0.2
 						echo ""
-					elif [[ "$answer" == "n" ]] || [[ "$answer" == "N" ]]; then
+					else
 						UNITS_SKIPPED+=("$UNIT")
 						echo -n "[ ] unit $UNIT $scorer"
 						sleep 0.2
 						echo ""
-						break
 					fi
 				fi
 				UNITS["$UNIT"]="$scorer"
@@ -264,10 +263,12 @@ function ProcessFlukaOutput(){
 		return
 	fi
 	#### Input ####
-	echo "" >> "$LOGFILE"
-	echo "##########" >> "$LOGFILE"
-	echo "Processing [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}" >> "$LOGFILE"
-	echo "##########" >> "$LOGFILE"
+	{
+		echo ""
+		echo "##########"
+		echo "Processing [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}"
+		echo "##########"
+	} >> "$LOGFILE"
 	ls -1 | grep "$name_pattern" > "$TXTFILE"
 	echo "" >> "$TXTFILE"
 	if [[ "${unit}" == "17" ]]; then # DETECT output is always on unit 17
@@ -279,12 +280,12 @@ function ProcessFlukaOutput(){
 	#### Processing ####
 	echo -ne "[ ] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}\r"
 	readout="${READOUTS[${UNITS[$unit]}]}"
-	cat "$TXTFILE" | "$readout" >> "$LOGFILE"
+	< "$TXTFILE" "$readout" >> "$LOGFILE"
 	if [[ "${UNITS[$unit]}" == "USRBIN" ]] && [[ "${SETTINGS[dat]}" == "true" ]]; then # convert USRBIN binary output to plain text
 		echo "${merged_name}.bnn" > "$TXTFILE"
 		echo "${merged_name}.dat" >> "$TXTFILE"
 		readout="${READOUTS[BIN2DAT]}"
-		cat "$TXTFILE" | "$readout" >> "$LOGFILE"
+		< "$TXTFILE" "$readout" >> "$LOGFILE"
 	fi
 	echo  "[+] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}"
 	#### Add files for further copy/move operations ####
@@ -396,8 +397,10 @@ function CheckPrepro(){
 		return
 	fi
 	local id=""
-	local def="$(echo -n "$1" | cut -d " " -f1)"
-	local idname="$(echo -n "$1" | cut -d " " -f2)"
+	local def=""
+	def="$(echo -n "$1" | cut -d " " -f1)"
+	local idname=""
+	idname="$(echo -n "$1" | cut -d " " -f2)"
 	if [[ "$def" == "#define" ]]; then
 		if [[ "$PREPRO" == "true" ]]; then
 			DEFS["$idname"]=""
@@ -487,7 +490,8 @@ function GetCODEWD(){
 	if [[ "$FIXED" == "true" ]] && [[ "$GEO" == "false" ]]; then
 		CODEWD="$(echo -n "$1" | cut -c 1-10 | sed 's/[[:space:]]*$//')"
 	else
-		local str="$(echo -n "$1" | sed 's/^[[:space:]]*//')"
+		local str=""
+		str="$(echo -n "$1" | sed 's/^[[:space:]]*//')"
 		local IFS=' ,;:\'
 		local tok=($str)
 		CODEWD="${tok[0]}"
@@ -554,7 +558,8 @@ function GetFixedWHAT(){
 }
 
 function GetFreeWHAT(){
-	local str="$(echo -n "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+	local str=""
+	str="$(echo -n "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 	local IFS=' ,;:\'
 	local tok=($str)
 	NUMBER="$(echo -n "${tok[$2]}" | sed 's/\.0*$//')"
