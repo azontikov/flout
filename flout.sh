@@ -464,6 +464,8 @@ function CheckPrepro(){
 		unset 'PROC["$LEVEL"]'
 		(( --LEVEL ))
 		ApplyPrepro
+	elif [[ "$def" == "#include" ]]; then
+		echo "Warning: ignore '#include' directive" >&2
 	else
 		echo "Error: unknown preprocessor directive '$def'" >&2
 		exit 1
