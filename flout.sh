@@ -105,13 +105,13 @@ function ReadFlukaInput(){
 	GetGlobalFormat "$1"
 	#### cleanup ####
 	for key in "${!DEFS[@]}"; do
-		unset 'DEFS["$key"]'
+		unset DEFS["$key"]
 	done
 	for key in "${!LEVELS[@]}"; do
-		unset 'LEVELS["$key"]'
+		unset LEVELS["$key"]
 	done
 	for key in "${!PROC[@]}"; do
-		unset 'PROC["$key"]'
+		unset PROC["$key"]
 	done
 	PREPRO="true"
 	LEVEL=0
@@ -280,12 +280,12 @@ function ProcessFlukaOutput(){
 	#### Processing ####
 	echo -ne "[ ] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}\r"
 	readout="${READOUTS[${UNITS[$unit]}]}"
-	< "$TXTFILE" "$readout" >> "$LOGFILE"
+	cat "$TXTFILE" | "$readout" >> "$LOGFILE"
 	if [[ "${UNITS[$unit]}" == "USRBIN" ]] && [[ "${SETTINGS[dat]}" == "true" ]]; then # convert USRBIN binary output to plain text
 		echo "${merged_name}.bnn" > "$TXTFILE"
 		echo "${merged_name}.dat" >> "$TXTFILE"
 		readout="${READOUTS[BIN2DAT]}"
-		< "$TXTFILE" "$readout" >> "$LOGFILE"
+		cat "$TXTFILE" | "$readout" >> "$LOGFILE"
 	fi
 	echo  "[+] [$FILECOUNT/$FILETOTAL] unit $unit ${UNITS[$unit]}"
 	#### Add files for further copy/move operations ####
@@ -407,7 +407,7 @@ function CheckPrepro(){
 		fi
 	elif [[ "$def" == "#undef" ]]; then
 		if [[ "$PREPRO" == "true" ]]; then
-			unset 'DEFS["$idname"]'
+			unset DEFS["$idname"]
 		fi
 	elif [[ "$def" == "#if" ]] || [[ "$def" == "#ifdef" ]]; then
 		(( ++LEVEL ))
@@ -460,8 +460,8 @@ function CheckPrepro(){
 		fi
 		ApplyPrepro
 	elif [[ "$def" == "#endif" ]]; then
-		unset 'LEVELS["$LEVEL"]'
-		unset 'PROC["$LEVEL"]'
+		unset LEVELS["$LEVEL"]
+		unset PROC["$LEVEL"]
 		(( --LEVEL ))
 		ApplyPrepro
 	elif [[ "$def" == "#include" ]]; then
@@ -741,7 +741,7 @@ while (( "${#UNITS[@]}" > 0 )); do
 	else
 		echo "$UNITMIN ${UNITS[$UNITMIN]}" >> "$UIFILE"
 	fi
-	unset 'UNITS["$UNITMIN"]'
+	unset UNITS["$UNITMIN"]
 	UNITMIN=1000
 done
 
